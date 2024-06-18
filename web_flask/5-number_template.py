@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 """
-FLASK MODULE
+Flask module
 """
 
-from flask import Flask, escape
+from flask import Flask, escape, render_template
 
 app = Flask(__name__)
 
@@ -31,6 +31,20 @@ def python_text(text):
     # Replace underscore symbols with a space
     text = escape(text).replace('_', ' ')
     return 'Python {}'.format(text)
+
+
+@app.route('/number/<int:n>', strict_slashes=False)
+def number_n(n):
+    return '{} is a number'.format(n)
+
+
+@app.route('/number_template/<int:n>', strict_slashes=False)
+def number_template_n(n):
+    # Display a HTML page only if n is an integer
+    if isinstance(n, int):
+        return render_template('5-number.html', n=n)
+    else:
+        return 'Not a valid number'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
