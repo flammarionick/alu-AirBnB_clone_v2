@@ -1,34 +1,40 @@
 #!/usr/bin/python3
-"""
-Fabric script that distributes an archive to your web servers
-"""
-from os.path import exists
-from fabric.api import env, put, run
+""" Function that compress a folder """
 from datetime import datetime
+from fabric.api import *
+import shlex
+import os
 
-# Setup Fabric environment variables.
-env.hosts = ['54.90.67.236', '54.90.237.122']
-env.user = 'ubuntu'
+
+env.hosts = ['54.235.14.97', '54.205.221.93']
+env.user = "ubuntu"
 
 
 def do_deploy(archive_path):
-    """
-    Distributes an archive to your web servers
-    """
-    if exists(archive_path) is False:
+    """ The fuction doing Deployments """
+    if not os.path.exists(archive_path):
         return False
     try:
-        file_n = archive_path.split("/")[-1]
-        file_p = file_n.split(".")[0]
-        path = "/data/web_static/releases/"
+        name = archive_path.replace('/', ' ')
+        name = shlex.split(name)
+        name = name[-1]
+
+        wname = name.replace('.', ' ')
+        wname = shlex.split(wname)
+        wname = wname[0]
+
+        releases_path = "/data/web_static/releases/{}/".format(wname)
+        tmp_path = "/tmp/{}".format(name)
+
         put(archive_path, "/tmp/")
-        run("sudo mkdir -p {}{}/".format(path, file_p))
-        run("sudo tar -xzf /tmp/{} -C {}{}/".format(file_n, path, file_p))
-        run("sudo rm /tmp/{}".format(file_n))
-        run("sudo mv -n {0}{1}/web_static/* {0}{1}/".format(path, file_p))
-        run("sudo rm -rf {}{}/web_static".format(path, file_p))
-        run("sudo rm -rf /data/web_static/current")
-        run("sudo ln -s {}{}/ /data/web_static/current".format(path, file_p))
+        run("mkdir -p {}".format(releases_path))
+        run("tar -xzf {} -C {}".format(tmp_path, releases_path))
+        run("rm {}".format(tmp_path))
+        run("mv {}web_static/* {}".format(releases_path, releases_path))
+        run("rm -rf {}web_static".format(releases_path))
+        run("rm -rf /data/web_static/current")
+        run("ln -s {} /data/web_static/current".format(releases_path))
+        print("New version deployed!")
         return True
     except:
         return False
